@@ -47,7 +47,7 @@ def send_notification(update_date):
     )
     bot.send_message(CHAT_ID, message)
 
-# === Основной скрипт ===
+# === Основной скрипт. ===
 def main():
     print("Скрипт запущен. Выполняю проверку обновления...")
 
