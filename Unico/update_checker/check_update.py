@@ -1,46 +1,39 @@
 import requests
-import re
 from bs4 import BeautifulSoup
-from datetime import datetime
+import re
 import telebot
 
 # === Настройки ===
 BOT_TOKEN = '7670367239:AAGYKkgtSmCeejxxAnwLV9R_BgG9um_-ymE'
-CHAT_ID = '6231070374'  # твой user_id из Telegram
+CHAT_ID = '6231070374'
 PACKAGE_NAME = 'com.unico.android'
 GOOGLE_PLAY_URL = f'https://play.google.com/store/apps/details?id={PACKAGE_NAME}&hl=ru'
 
 bot = telebot.TeleBot(BOT_TOKEN)
 
-
 # === Получение даты обновления из Google Play ===
 def get_update_date():
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                      "AppleWebKit/537.36 (KHTML, like Gecko) "
-                      "Chrome/115.0.0.0 Safari/537.36"
+        "User-Agent": "Mozilla/5.0"
     }
     response = requests.get(GOOGLE_PLAY_URL, headers=headers)
-    if not response.ok:
-        print("❌ Не удалось загрузить страницу:", response.status_code)
-        return None
-
     soup = BeautifulSoup(response.text, 'html.parser')
-    update_blocks = soup.find_all("div", class_="xg1aie")
-    for div in update_blocks:
-        if re.search(r'\d{1,2} \S+\. \d{4} г\.', div.text):
-            return div.text.strip()
 
-    print("❌ Не удалось найти дату обновления на странице.")
+    # Ищем по структуре: div с классом lXlx5 — это заголовок "Последнее обновление"
+    # Следующий соседний div с классом xg1aie содержит дату
+    all_blocks = soup.find_all('div', class_='lXlx5')
+    for block in all_blocks:
+        if block.text.strip() == "Последнее обновление":
+            date_div = block.find_next_sibling('div')
+            if date_div:
+                return date_div.text.strip()
     return None
 
-
-# === Получение последней отправленной даты из чата Telegram ===
+# === Получение последней сохранённой даты из Telegram чата ===
 def get_last_notified_date():
     updates = requests.get(
         f"https://api.telegram.org/bot{BOT_TOKEN}/getUpdates"
     ).json()
-
     messages = updates.get("result", [])
     for msg in reversed(messages):
         text = msg.get("message", {}).get("text", "")
@@ -49,7 +42,6 @@ def get_last_notified_date():
             if match:
                 return match.group(1)
     return None
-
 
 # === Отправка уведомления в Telegram ===
 def send_notification(update_date):
@@ -60,18 +52,19 @@ def send_notification(update_date):
     )
     bot.send_message(CHAT_ID, message)
 
-
 # === Основной скрипт ===
 def main():
     print("Скрипт запущен. Выполняю проверку обновления...")
 
     current_update_date = get_update_date()
     if not current_update_date:
-        print("❌ Не удалось получить дату обновления.")
+        print("❌ Не удалось найти дату обновления на странице.")
         return
 
     last_notified_date = get_last_notified_date()
-    print(f"Текущая дата обновления: {current_update_date}, Последняя отправленная: {last_notified_date}")
+
+    print(f"Текущая дата обновления: {current_update_date}")
+    print(f"Последняя отправленная дата: {last_notified_date}")
 
     if current_update_date != last_notified_date:
         send_notification(current_update_date)
