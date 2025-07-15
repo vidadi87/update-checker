@@ -5,8 +5,8 @@ from datetime import datetime
 import telebot
 
 # === Настройки ===
-BOT_TOKEN = 'твой_токен_бота'
-CHAT_ID = 'твой_chat_id'
+BOT_TOKEN = '7670367239:AAGYKkgtSmCeejxxAnwLV9R_BgG9um_-ymE'
+CHAT_ID = '5649621372'
 PACKAGE_NAME = 'com.unico.android'
 GOOGLE_PLAY_URL = f'https://play.google.com/store/apps/details?id={PACKAGE_NAME}&hl=ru'
 
@@ -58,7 +58,7 @@ def main():
 
     last_notified_date = get_last_notified_date()
 
-    print(f"Текущая дата обновления: {current_update_date}, Последняя отправленная: {last_notified_date}")
+    print(f"[{datetime.now()}] Текущая дата обновления: {current_update_date}, Предыдущая: {last_notified_date}")
 
     if current_update_date != last_notified_date:
         send_notification(current_update_date)
