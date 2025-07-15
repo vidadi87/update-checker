@@ -1,12 +1,12 @@
 import requests
+import re
 from bs4 import BeautifulSoup
 from datetime import datetime
-import re
 import telebot
 
 # === Настройки ===
 BOT_TOKEN = '7670367239:AAGYKkgtSmCeejxxAnwLV9R_BgG9um_-ymE'
-CHAT_ID = '5649621372'
+CHAT_ID = '6231070374'
 PACKAGE_NAME = 'com.unico.android'
 GOOGLE_PLAY_URL = f'https://play.google.com/store/apps/details?id={PACKAGE_NAME}&hl=ru'
 
@@ -19,12 +19,9 @@ def get_update_date():
     }
     response = requests.get(GOOGLE_PLAY_URL, headers=headers)
     soup = BeautifulSoup(response.text, 'html.parser')
-
-    label = soup.find('div', text='Последнее обновление')
-    if label:
-        date_div = label.find_next_sibling('div')
-        if date_div:
-            return date_div.text.strip()
+    match = re.search(r'Последнее обновление\s*([\d]{1,2} \S+\. \d{4} г\.)', soup.text)
+    if match:
+        return match.group(1)
     return None
 
 # === Получение последней сохранённой даты из Telegram чата ===
