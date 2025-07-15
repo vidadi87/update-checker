@@ -22,7 +22,7 @@ def get_app_version():
 
         for i, span in enumerate(spans):
             if "Текущая версия" in span.text:
-                return "999.999.999"  # Подставная версия для теста
+                return "999.999.998"  # Подставная версия для теста
         return None
     except Exception as e:
         print("Ошибка при получении версии:", e)
