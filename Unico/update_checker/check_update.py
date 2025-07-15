@@ -1,76 +1,74 @@
 import requests
 from bs4 import BeautifulSoup
-import re
-import telebot
+import time
+import datetime
 
 # === Настройки ===
 BOT_TOKEN = '7670367239:AAGYKkgtSmCeejxxAnwLV9R_BgG9um_-ymE'
-CHAT_ID = '6231070374'
+CHAT_ID = '6231070374'  # ← твой chat_id из Telegram
 PACKAGE_NAME = 'com.unico.android'
 GOOGLE_PLAY_URL = f'https://play.google.com/store/apps/details?id={PACKAGE_NAME}&hl=ru'
 
-bot = telebot.TeleBot(BOT_TOKEN)
 
-# === Получение даты обновления из Google Play ===
+# === Основные функции ===
+
 def get_update_date():
-    headers = {
-        "User-Agent": "Mozilla/5.0"
-    }
-    response = requests.get(GOOGLE_PLAY_URL, headers=headers)
-    soup = BeautifulSoup(response.text, 'html.parser')
+    try:
+        response = requests.get(GOOGLE_PLAY_URL, timeout=10)
+        soup = BeautifulSoup(response.text, 'html.parser')
+        date_element = soup.find('div', class_='xg1aie')
+        return date_element.text.strip() if date_element else None
+    except Exception as e:
+        print(f'Ошибка при получении даты: {e}')
+        return None
 
-    # Ищем по структуре: div с классом lXlx5 — это заголовок "Последнее обновление"
-    # Следующий соседний div с классом xg1aie содержит дату
-    all_blocks = soup.find_all('div', class_='lXlx5')
-    for block in all_blocks:
-        if block.text.strip() == "Последнее обновление":
-            date_div = block.find_next_sibling('div')
-            if date_div:
-                return date_div.text.strip()
+
+def get_last_saved_date():
+    url = f"https://api.telegram.org/bot{BOT_TOKEN}/getUpdates"
+    try:
+        resp = requests.get(url).json()
+        messages = resp.get("result", [])
+        for msg in reversed(messages):
+            text = msg.get("message", {}).get("text", "")
+            if "Последняя известная дата обновления:" in text:
+                return text.split("Последняя известная дата обновления:")[-1].strip()
+    except Exception as e:
+        print(f'Ошибка при получении истории сообщений: {e}')
     return None
 
-# === Получение последней сохранённой даты из Telegram чата ===
-def get_last_notified_date():
-    updates = requests.get(
-        f"https://api.telegram.org/bot{BOT_TOKEN}/getUpdates"
-    ).json()
-    messages = updates.get("result", [])
-    for msg in reversed(messages):
-        text = msg.get("message", {}).get("text", "")
-        if "Дата обновления" in text:
-            match = re.search(r'Дата обновления: (\d{1,2} \S+\. \d{4} г\.)', text)
-            if match:
-                return match.group(1)
-    return None
 
-# === Отправка уведомления в Telegram ===
-def send_notification(update_date):
-    message = (
-        "📲 Обнаружено обновление приложения в Google Play!\n"
-        f"Дата обновления: {update_date}\n\n"
-        f"🔗 Скачать: {GOOGLE_PLAY_URL}"
-    )
-    bot.send_message(CHAT_ID, message)
+def send_notification(new_date):
+    message = f"📦 Обновление найдено!\nДата обновления: {new_date}"
+    url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+    data = {"chat_id": CHAT_ID, "text": message}
+    requests.post(url, data=data)
 
-# === Основной скрипт ===
-def main():
-    print("Скрипт запущен. Выполняю проверку обновления...")
+    # Сохраняем дату в чате, чтобы не отправлять дубли
+    log_message = f"Последняя известная дата обновления: {new_date}"
+    requests.post(url, data={"chat_id": CHAT_ID, "text": log_message})
 
-    current_update_date = get_update_date()
-    if not current_update_date:
+
+def check_and_notify():
+    print("Скрипт запущен. Выполняю проверку...")
+    current_date = get_update_date()
+    if not current_date:
         print("❌ Не удалось найти дату обновления на странице.")
         return
 
-    last_notified_date = get_last_notified_date()
+    last_known_date = get_last_saved_date()
+    print(f"Актуальная дата: {current_date} | Последняя сохранённая: {last_known_date}")
 
-    print(f"Текущая дата обновления: {current_update_date}")
-    print(f"Последняя отправленная дата: {last_notified_date}")
-
-    if current_update_date != last_notified_date:
-        send_notification(current_update_date)
-        print("✅ Уведомление отправлено.")
+    if current_date != last_known_date:
+        print("🔔 Найдено обновление. Отправка уведомления...")
+        send_notification(current_date)
     else:
-        print("ℹ️ Обновлений не обнаружено.")
+        print("ℹ️ Обновлений нет.")
 
-if __name__ == '__main__':
-    main()
+
+# === Основной цикл — 3 раза в сутки ===
+
+if __name__ == "__main__":
+    while True:
+        check_and_notify()
+        print("⏳ Следующая проверка через 8 часов...\n")
+        time.sleep(8 * 60 * 60)  # 8 часов пауза
