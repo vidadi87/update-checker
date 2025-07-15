@@ -1,17 +1,17 @@
 import requests
 from bs4 import BeautifulSoup
-import time
 from datetime import datetime
+
+print("Скрипт запущен. Выполняю немедленную проверку...")
 
 APP_ID = "com.unico.android"
 APP_URL = f"https://play.google.com/store/apps/details?id={APP_ID}&hl=ru"
-CHECK_TIMES = ["09:00", "15:00", "21:00"]  # По времени Астаны
 
 BOT_TOKEN = "7670367239:AAGYKkgtSmCeejxxAnwLV9R_BgG9um_-ymE"
 CHAT_ID = "6231070374"
 
-last_checked_date = None
-last_version = None
+last_version = None  # Глобальная переменная для отслеживания версии
+
 
 def get_app_version():
     try:
@@ -22,11 +22,12 @@ def get_app_version():
 
         for i, span in enumerate(spans):
             if "Текущая версия" in span.text:
-                return "1000.000.000"  # ← Подставная версия для теста
+                return "1000.000.000"  # Подставная версия для теста
         return None
     except Exception as e:
         print("Ошибка при получении версии:", e)
         return None
+
 
 def send_telegram_message(text):
     url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
@@ -37,10 +38,12 @@ def send_telegram_message(text):
     except Exception as e:
         print("Ошибка при отправке Telegram-сообщения:", e)
 
+
 def check_for_update():
     global last_version
     version = get_app_version()
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
     print(f"[{now}] Получена версия: {version}, Предыдущая: {last_version}")
 
     if version:
@@ -53,24 +56,6 @@ def check_for_update():
     else:
         print(f"[{now}] Не удалось получить версию.")
 
-def should_check_now():
-    global last_checked_date
-    now = datetime.now()
-    current_time = now.strftime("%H:%M")
-    current_date = now.date()
 
-    print(f"Проверка времени: {current_time} / {CHECK_TIMES}")
-    if current_time in CHECK_TIMES:
-        if last_checked_date != (current_date, current_time):
-            last_checked_date = (current_date, current_time)
-            return True
-    return False
-
-print("Скрипт запущен. Ожидаю время проверки...")
-
-while True:
-    if should_check_now():
-        check_for_update()
-        time.sleep(60)
-    else:
-        time.sleep(20)
+# ВРЕМЕННО: запуск проверки сразу, без ожидания времени
+check_for_update()
