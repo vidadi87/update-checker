@@ -62,4 +62,4 @@ while True:
             print("Дата уже была отправлена ранее — уведомление не нужно.")
         time.sleep(60)
     else:
-        time.sleep(20)
+        time.sleep(21)
