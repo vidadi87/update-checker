@@ -2,10 +2,6 @@ import requests
 from bs4 import BeautifulSoup
 import time
 from datetime import datetime
-import locale
-
-# Устанавливаем русскую локаль для разбора "июл." и т.д.
-locale.setlocale(locale.LC_TIME, "ru_RU.UTF-8")
 
 APP_ID = "com.unico.android"
 APP_URL = f"https://play.google.com/store/apps/details?id={APP_ID}&hl=ru"
@@ -83,8 +79,7 @@ while True:
         last_sent_date = get_last_sent_update_date()
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-        print(f"[{now}] Последняя дата обновления в Google Play: {current_update_date}")
-        print(f"[{now}] Последняя отправленная дата: {last_sent_date}")
+        print(f"[{now}] Текущая дата обновления: {current_update_date}, Предыдущая: {last_sent_date}")
 
         if current_update_date and current_update_date != last_sent_date:
             send_telegram_message(
@@ -93,7 +88,7 @@ while True:
                 f"https://play.google.com/store/apps/details?id={APP_ID}&hl=ru"
             )
         else:
-            print(f"[{now}] Дата не изменилась.")
+            print(f"[{now}] Обновлений не обнаружено.")
         time.sleep(60)
     else:
         time.sleep(20)
