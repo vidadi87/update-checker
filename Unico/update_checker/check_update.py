@@ -8,7 +8,7 @@ import telebot
 BOT_TOKEN = '7670367239:AAGYKkgtSmCeejxxAnwLV9R_BgG9um_-ymE'
 CHAT_ID = '5649621372'
 PACKAGE_NAME = 'com.unico.android'
-GOOGLE_PLAY_URL = f'https://play.google.com/store/apps/details?id={PACKAGE_NAME}&hl=ru'
+GOOGLE_PLAY_URL = f'https://play.google.com/store/apps/details?id=com.unico.android&hl=ru'
 
 bot = telebot.TeleBot(BOT_TOKEN)
 
