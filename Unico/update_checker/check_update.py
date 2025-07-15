@@ -3,6 +3,20 @@ from bs4 import BeautifulSoup
 import time
 from datetime import datetime
 
+print("Скрипт запущен")  # уже есть
+
+def should_check_now():
+    now = datetime.now().strftime("%H:%M")
+    print(f"Проверка времени: сейчас {now}")
+    return now in CHECK_TIMES
+
+def check_for_update():
+    global last_version
+    version = get_app_version()
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    print(f"[{now}] Получена версия: {version}, Предыдущая: {last_version}")
+
+
 APP_ID = "com.unico.android"
 APP_URL = f"https://play.google.com/store/apps/details?id={APP_ID}&hl=ru"
 CHECK_TIMES = ["09:00", "15:00", "21:00"]  # По времени Астаны (+5)
