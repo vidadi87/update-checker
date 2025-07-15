@@ -1,35 +1,42 @@
 import requests
 from bs4 import BeautifulSoup
-from datetime import datetime
 import time
-
-print("Скрипт запущен. Выполняю немедленную проверку...")
+from datetime import datetime
 
 APP_ID = "com.unico.android"
 APP_URL = f"https://play.google.com/store/apps/details?id={APP_ID}&hl=ru"
+CHECK_TIMES = ["09:00", "15:00", "21:00"]
+
 BOT_TOKEN = "7670367239:AAGYKkgtSmCeejxxAnwLV9R_BgG9um_-ymE"
 CHAT_ID = "6231070374"
 
-# Подставная дата для теста: имитируем, что приложение обновлено сегодня
-def get_fake_update_date():
-    return datetime.now().strftime("%d %b. %Y г.").replace("Jul", "июл").replace("Jun", "июн")
-
+# 👇 Заглушка для тестов: якобы последнее обновление — 15.07.2025
 def get_update_date():
+    return "15.07.2025"  # ← тут будет парсинг с сайта позже
+
+def get_last_sent_update_date():
     try:
-        headers = {"User-Agent": "Mozilla/5.0"}
-        res = requests.get(APP_URL, headers=headers, timeout=10)
-        soup = BeautifulSoup(res.text, "html.parser")
-        all_divs = soup.find_all("div")
-        for div in all_divs:
-            if "Последнее обновление" in div.text:
-                # return div.find_next_sibling("span").text.strip()
-                return get_fake_update_date()  # <== заменить на строку выше после тестов
+        url = f"https://api.telegram.org/bot{BOT_TOKEN}/getUpdates"
+        res = requests.get(url, timeout=10)
+        messages = res.json().get("result", [])
+        for msg in reversed(messages):
+            if "message" in msg and "text" in msg["message"]:
+                text = msg["message"]["text"]
+                if text.startswith("📲 Обновление приложения"):
+                    for line in text.splitlines():
+                        if line.startswith("Дата обновления: "):
+                            return line.replace("Дата обновления: ", "").strip()
         return None
     except Exception as e:
-        print("Ошибка при получении даты обновления:", e)
+        print("Ошибка при получении последней отправленной даты из Telegram:", e)
         return None
 
-def send_telegram_message(text):
+def send_telegram_message(update_date):
+    text = (
+        f"📲 Обновление приложения в Google Play!\n"
+        f"Дата обновления: {update_date}\n"
+        f"Скачать: https://play.google.com/store/apps/details?id={APP_ID}&hl=ru"
+    )
     url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
     data = {"chat_id": CHAT_ID, "text": text}
     try:
@@ -38,23 +45,21 @@ def send_telegram_message(text):
     except Exception as e:
         print("Ошибка при отправке Telegram-сообщения:", e)
 
-last_update_date = "30 июн. 2025 г."  # изначально известная дата
+def should_check_now():
+    now = datetime.now().strftime("%H:%M")
+    return now in CHECK_TIMES
 
-def check_update():
-    global last_update_date
-    current_date = get_update_date()
-    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    print(f"[{now}] Текущая дата обновления: {current_date}, Предыдущая: {last_update_date}")
+print("Скрипт запущен. Ожидаю время проверки...")
 
-    if current_date and current_date != last_update_date:
-        send_telegram_message(
-            f"📲 Обнаружено обновление приложения в Google Play!\n"
-            f"Дата обновления: {current_date}\n\n"
-            f"🔗 Скачать: {APP_URL}"
-        )
-        last_update_date = current_date
+while True:
+    if should_check_now():
+        update_date = get_update_date()
+        last_sent = get_last_sent_update_date()
+        print(f"Проверка даты: обновление {update_date}, последняя отправка {last_sent}")
+        if update_date != last_sent:
+            send_telegram_message(update_date)
+        else:
+            print("Дата уже была отправлена ранее — уведомление не нужно.")
+        time.sleep(60)
     else:
-        print("Обновлений не обнаружено.")
-
-# Запуск сразу
-check_update()
+        time.sleep(20)
