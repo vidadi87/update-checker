@@ -1,6 +1,5 @@
 import requests
 from bs4 import BeautifulSoup
-import re
 from datetime import datetime
 
 APP_ID = "com.unico.android"
@@ -9,33 +8,31 @@ APP_URL = f"https://play.google.com/store/apps/details?id={APP_ID}&hl=ru"
 BOT_TOKEN = "7670367239:AAGYKkgtSmCeejxxAnwLV9R_BgG9um_-ymE"
 CHAT_ID = "6231070374"
 
-# Здесь храним последнюю "известную" дату — для теста задаём вручную:
-last_update_date = "30 июн. 2025 г."  # Что было "вчера"
+# Имитируем старую дату обновления
+last_update_date = "30 июн. 2025 г."  # Предыдущая версия
+# Имитируем новую дату обновления (как будто сегодня)
+mock_update_date = "15 июл. 2025 г."  # Новая дата для теста
 
 
 def get_app_update_date():
     """
-    Парсим HTML и извлекаем дату обновления
+    ⚠️ Возвращает подставную дату обновления для теста
     """
-    try:
-        headers = {"User-Agent": "Mozilla/5.0"}
-        res = requests.get(APP_URL, headers=headers, timeout=10)
-        soup = BeautifulSoup(res.text, "html.parser")
+    print("⚠️ Имитация: возвращаем подставную дату обновления.")
+    return mock_update_date
 
-        for span in soup.find_all("span"):
-            if "Последнее обновление" in span.text:
-                # ТЕСТ: подменим дату прямо здесь
-                print("⚠️ Имитация: возвращаем подставную дату")
-                return "31 июн. 2025 г."
-
-                # Если хочешь реальную дату — раскомментируй:
-                # match = re.search(r"(\d{1,2} \w+\. \d{4})", span.text)
-                # if match:
-                #     return match.group(1)
-        return None
-    except Exception as e:
-        print("❌ Ошибка при получении даты обновления:", e)
-        return None
+    # Для реальной даты — можно раскомментировать:
+    # try:
+    #     headers = {"User-Agent": "Mozilla/5.0"}
+    #     res = requests.get(APP_URL, headers=headers, timeout=10)
+    #     soup = BeautifulSoup(res.text, "html.parser")
+    #     for span in soup.find_all("span"):
+    #         if "Последнее обновление" in span.text:
+    #             return span.text.strip()
+    #     return None
+    # except Exception as e:
+    #     print("❌ Ошибка при получении даты обновления:", e)
+    #     return None
 
 
 def send_telegram_message(text):
@@ -62,6 +59,6 @@ def check_for_update():
         print("⏳ Обновления не обнаружено.")
 
 
-# Выполнить проверку сразу (без таймера)
+# Выполнить немедленную проверку
 print("🚀 Скрипт запущен. Выполняю немедленную проверку...")
 check_for_update()
