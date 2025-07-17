@@ -79,4 +79,3 @@ def check_and_notify():
 
 if __name__ == "__main__":
     check_and_notify()
-# тест
