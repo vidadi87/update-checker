@@ -1,17 +1,14 @@
 import requests
 from bs4 import BeautifulSoup
-import time
 import datetime
 import re
 
 # === Настройки ===
-BOT_TOKEN = 'ВАШ_ТОКЕН_БОТА'
-CHAT_ID = 'ВАШ_CHAT_ID_ПОЛЬЗОВАТЕЛЯ'
-GROUP_CHAT_ID = -1002781665654  # ID вашей Telegram-группы
-PACKAGE_NAME = 'com.unico.android'
-GOOGLE_PLAY_URL = f'https://play.google.com/store/apps/details?id={PACKAGE_NAME}&hl=ru'
-
-# === Функции ===
+BOT_TOKEN = "7670367239:AAGYKkgtSmCeejxxAnwLV9R_BgG9um_-ymE"
+CHAT_ID = "6231070374"
+GROUP_CHAT_ID = -1002781665654
+PACKAGE_NAME = "com.unico.android"
+GOOGLE_PLAY_URL = f"https://play.google.com/store/apps/details?id={PACKAGE_NAME}&hl=ru"
 
 def log(message):
     timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -24,10 +21,9 @@ def get_update_date():
         response = requests.get(GOOGLE_PLAY_URL, timeout=10)
         soup = BeautifulSoup(response.text, 'html.parser')
         date_element = soup.find('div', class_='xg1aie')
-        return date_element.text.strip() if date_element else None
+        return date_element.text.strip().replace('\u202f', ' ').replace('\xa0', ' ') if date_element else None
     except Exception as e:
-        log(f"Ошибка при получении даты: {e}")
-        return None
+        return log(f"Ошибка при получении даты: {e}")
 
 def get_group_description():
     url = f"https://api.telegram.org/bot{BOT_TOKEN}/getChat"
@@ -51,9 +47,9 @@ def send_notification(new_date, log_text):
     send_url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
     requests.post(send_url, data={"chat_id": CHAT_ID, "text": message, "disable_web_page_preview": True})
 
-    # Лог как файл
+    # Лог текущего запуска
     send_file_url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendDocument"
-    files = {"document": ("last_check_log.txt", log_text)}
+    files = {"document": ("update_log.txt", log_text)}
     requests.post(send_file_url, data={"chat_id": CHAT_ID}, files=files)
 
 def check_and_notify():
@@ -61,25 +57,25 @@ def check_and_notify():
     log_entries.append(log("Проверка обновлений..."))
 
     play_date = get_update_date()
-    group_description = get_group_description()
-    saved_date = extract_date_from_description(group_description)
-
-    log_entries.append(log(f"Дата на Google Play: {play_date} | Дата в описании группы: {saved_date}"))
-
     if not play_date:
         log_entries.append(log("❌ Не удалось получить дату обновления."))
         return
 
-    if play_date != saved_date:
+    group_desc = get_group_description()
+    saved_date = extract_date_from_description(group_desc)
+
+    # Преобразование пробелов
+    play_date_clean = play_date.replace('\u202f', ' ').replace('\xa0', ' ')
+    saved_date_clean = saved_date.replace('\u202f', ' ').replace('\xa0', ' ') if saved_date else None
+
+    log_entries.append(log(f"Дата на Google Play: {play_date_clean} | Дата в описании группы: {saved_date_clean}"))
+
+    if play_date_clean != saved_date_clean:
         log_entries.append(log("🔔 Найдено обновление или дата отсутствует. Отправка уведомления..."))
-        update_group_description(play_date)
-        send_notification(play_date, "\n".join(log_entries))
+        update_group_description(play_date_clean)
+        send_notification(play_date_clean, "\n".join(log_entries))
     else:
         log_entries.append(log("ℹ️ Обновлений нет."))
 
-# === Основной цикл: каждые 30 минут ===
-
 if __name__ == "__main__":
-    while True:
-        check_and_notify()
-        time.sleep(30 * 60)  # 30 минут
+    check_and_notify()
