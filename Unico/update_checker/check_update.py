@@ -31,7 +31,7 @@ def get_group_description():
     return resp.get("result", {}).get("description", "")
 
 def extract_date_from_description(desc):
-    match = re.search(r'\d{1,2} \w{3}\. \d{4} г\.', desc)
+    match = re.search(r'\d{1,2} \w+\. \d{4} г\.', desc)
     return match.group(0) if match else None
 
 def update_group_description(new_date):
