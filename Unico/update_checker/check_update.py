@@ -2,6 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 import datetime
 import re
+from pytz import timezone
 
 # === Настройки ===
 BOT_TOKEN = "7670367239:AAGYKkgtSmCeejxxAnwLV9R_BgG9um_-ymE"
@@ -11,7 +12,8 @@ PACKAGE_NAME = "com.unico.android"
 GOOGLE_PLAY_URL = f"https://play.google.com/store/apps/details?id={PACKAGE_NAME}&hl=ru"
 
 def log(message):
-    timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    tz = timezone("Asia/Almaty")
+    timestamp = datetime.datetime.now(tz).strftime('%Y-%m-%d %H:%M:%S')
     entry = f"[{timestamp}] {message}"
     print(entry)
     return entry
