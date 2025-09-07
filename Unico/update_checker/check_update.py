@@ -70,10 +70,10 @@ def check_and_notify():
     play_date_clean = play_date.replace('\u202f', ' ').replace('\xa0', ' ')
     saved_date_clean = saved_date.replace('\u202f', ' ').replace('\xa0', ' ') if saved_date else None
 
-    log_entries.append(log(f"Дата на Google Play: {play_date_clean} | Дата в описании группы: {saved_date_clean}"))
+    log_entries.append(log(f"Новая дата на Google Play: {play_date_clean} | Старая дата на Google Play: {saved_date_clean}"))
 
     if play_date_clean != saved_date_clean:
-        log_entries.append(log("🔔 Найдено обновление или дата отсутствует. Отправка уведомления..."))
+        log_entries.append(log("🔔 Найдено обновление. Отправка уведомления..."))
         update_group_description(play_date_clean)
         send_notification(play_date_clean, "\n".join(log_entries))
     else:
