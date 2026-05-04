@@ -42,8 +42,8 @@ def update_group_description(new_date):
 
 def send_notification(new_date, log_text):
     message = (
-        "📦 Обновление найдено!\n"
-        f"Дата обновления: {new_date}\n"
+        "📦 Обновление найдено! 🎉\n"
+        f"Новая дата обновления: {new_date}\n"
         f"Ссылка для скачивания: {GOOGLE_PLAY_URL}"
     )
     send_url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
