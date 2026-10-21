@@ -72,7 +72,10 @@ def fetch_via_library():
     ts = info.get("updated")
     if not isinstance(ts, (int, float)) or ts <= 0:
         return None
-    return {"ts": int(ts), "version": info.get("version") or None, "date_text": None}
+    version = info.get("version")
+    if not version or version.strip().lower() in ("varies with device", "зависит от устройства"):
+        version = None  # Google не отдаёт версию, это не данные
+    return {"ts": int(ts), "version": version, "date_text": None}
 
 
 def fetch_via_html():
