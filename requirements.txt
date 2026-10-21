@@ -2,3 +2,4 @@ requests
 beautifulsoup4
 pyTelegramBotAPI
 pytz
+google-play-scraper
